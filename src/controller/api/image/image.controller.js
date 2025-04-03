@@ -25,7 +25,7 @@ exports.videoConvert = async (req, res) => {
 
         // Upload image to a public URL (assuming you have an upload service)
         const imageUrl = `${SERVER_URL}/uploads/images/${req.file.filename}`;
-
+        console.log(imageUrl)
         const client = new RunwayML({ apiKey: apikey });
 
         // Request video conversion
