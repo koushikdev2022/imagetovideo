@@ -23,58 +23,50 @@ exports.videoConvert = async (req, res) => {
 
         const imagePath = req.file.path;
         const imageExtension = path.extname(imagePath).toLowerCase();
-
-        // Validate supported image formats
         const allowedFormats = [".jpg", ".jpeg", ".png"];
+
         if (!allowedFormats.includes(imageExtension)) {
             return res.status(400).json({ msg: "Unsupported image format. Use JPG or PNG.", status: false });
         }
 
-        const promptText = req.body.promptText || 
-            "Create a dynamic animation from this still image: Separate & animate foreground/background with parallax Add subtle environment effects (swaying leaves, drifting clouds) Include gentle particle effects where fitting Slow camera zoom in to characters, then zoom out Keep original colors and mood Ensure all movement feels natural and smooth";
-
-        // Construct the public URL of the uploaded image
+        // 🔥 Ensure the URL is correct
         const imageUrl = `${SERVER_URL}/uploads/images/${req.file.filename}`;
         console.log("Generated Image URL:", imageUrl);
 
-        // Check if the image URL is accessible
+        // ✅ Verify if the image URL is accessible
         try {
-            await axios.head(imageUrl); // HEAD request checks if the image is reachable
+            await axios.head(imageUrl);
         } catch (err) {
-            console.error("Image accessibility check failed:", err.message);
-            return res.status(400).json({ msg: "Uploaded image is not accessible", status: false });
+            console.error("Image URL not accessible:", err.message);
+            return res.status(400).json({ msg: "Uploaded image is not accessible. Make sure it's public.", status: false });
         }
+
+        const promptText = req.body.promptText || "Create a dynamic animation from this still image: Separate & animate foreground/background with parallax Add subtle environment effects (swaying leaves, drifting clouds) Include gentle particle effects where fitting Slow camera zoom in to characters, then zoom out Keep original colors and mood Ensure all movement feels natural and smooth";
 
         const client = new RunwayML({ apiKey: apikey });
 
-        // Request video conversion
+        // 🔥 Send a proper image URL
         const task = await client.imageToVideo.create({
             model: "gen3a_turbo",
-            promptImage: imageUrl,
+            promptImage: imageUrl, // ✅ Should be a publicly accessible URL
             promptText,
         });
 
         console.log("Task ID:", task.id);
 
-        // Polling for video status
         let videoUrl = null;
         while (!videoUrl) {
             const response = await client.tasks.get(task.id);
             if (response.status === "completed") {
-                videoUrl = response.output.video; // The generated video URL
+                videoUrl = response.output.video;
                 break;
             }
-            await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 seconds before retrying
+            await new Promise((resolve) => setTimeout(resolve, 5000));
         }
 
-        // Download and save video
         const videoPath = path.join(__dirname, "../../public/uploads/videos/", `${Date.now()}-output.mp4`);
         const writer = fs.createWriteStream(videoPath);
-        const videoStream = await axios({
-            url: videoUrl,
-            method: "GET",
-            responseType: "stream",
-        });
+        const videoStream = await axios({ url: videoUrl, method: "GET", responseType: "stream" });
 
         videoStream.data.pipe(writer);
         await new Promise((resolve, reject) => {
@@ -82,7 +74,6 @@ exports.videoConvert = async (req, res) => {
             writer.on("error", reject);
         });
 
-        // Return the saved video URL
         return res.status(200).json({
             msg: "Video processing completed",
             videoUrl: `${SERVER_URL}/uploads/videos/${path.basename(videoPath)}`,
