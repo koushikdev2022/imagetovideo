@@ -5,6 +5,15 @@ const RunwayML = require("@runwayml/sdk");
 
 exports.videoConvert = async (req, res) => {
     try {
+        const apikey = process.env.API_KEY_IMAGE;
+
+        if (!apikey) {
+            return res.status(400).json({ msg: "API Key is missing", status: false });
+        }
+
+        // ✅ Initialize the client
+        const client = new RunwayML({ apiKey: apikey });
+
         const task = await client.imageToVideo.create({
             model: "gen3a_turbo",
             promptImage: "https://imagetovideo.bestworks.cloud/uploads/images/1743672872485-garden-images-3.jpg",
@@ -14,9 +23,15 @@ exports.videoConvert = async (req, res) => {
                 "Authorization": `Bearer ${apikey}`,
             },
         });
-    
+
         console.log("Task Created:", task);
+        return res.status(200).json({ msg: "Task Created", task, status: true });
+
     } catch (error) {
         console.error("API Error:", error.response?.data || error.message);
+        return res.status(500).json({
+            msg: error?.message || "Internal Server Error",
+            status: false
+        });
     }
 };
