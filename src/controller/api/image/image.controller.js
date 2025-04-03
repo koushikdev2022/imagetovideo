@@ -50,6 +50,10 @@ exports.videoConvert = async (req, res) => {
             model: "gen3a_turbo",
             promptImage: imageUrl, // ✅ Should be a publicly accessible URL
             promptText,
+            headers: {
+                "Content-Type": "image/jpeg",
+                "Content-Length": response.headers["content-length"], // Ensure it's sent
+            }
         });
 
         console.log("Task ID:", task.id);
