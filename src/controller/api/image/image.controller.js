@@ -22,6 +22,14 @@ exports.videoConvert = async (req, res) => {
         }
 
         const imagePath = req.file.path;
+        const imageExtension = path.extname(imagePath).toLowerCase();
+
+        // Validate supported image formats
+        const allowedFormats = [".jpg", ".jpeg", ".png"];
+        if (!allowedFormats.includes(imageExtension)) {
+            return res.status(400).json({ msg: "Unsupported image format. Use JPG or PNG.", status: false });
+        }
+
         const promptText = req.body.promptText || 
             "Create a dynamic animation from this still image: Separate & animate foreground/background with parallax Add subtle environment effects (swaying leaves, drifting clouds) Include gentle particle effects where fitting Slow camera zoom in to characters, then zoom out Keep original colors and mood Ensure all movement feels natural and smooth";
 
@@ -31,10 +39,7 @@ exports.videoConvert = async (req, res) => {
 
         // Check if the image URL is accessible
         try {
-            const checkImageResponse = await axios.get(imageUrl);
-            if (checkImageResponse.status !== 200) {
-                throw new Error("Uploaded image is not accessible");
-            }
+            await axios.head(imageUrl); // HEAD request checks if the image is reachable
         } catch (err) {
             console.error("Image accessibility check failed:", err.message);
             return res.status(400).json({ msg: "Uploaded image is not accessible", status: false });
@@ -42,20 +47,12 @@ exports.videoConvert = async (req, res) => {
 
         const client = new RunwayML({ apiKey: apikey });
 
-        // Create a formData object to send the image as a file
-        const formData = new FormData();
-        formData.append("model", "gen3a_turbo");
-        formData.append("promptText", promptText);
-        formData.append("promptImage", fs.createReadStream(imagePath));
-
-        // Set the headers, including Content-Length
-        const headers = {
-            ...formData.getHeaders(),
-            "Content-Length": fs.statSync(imagePath).size,
-        };
-
         // Request video conversion
-        const task = await client.imageToVideo.create(formData, { headers });
+        const task = await client.imageToVideo.create({
+            model: "gen3a_turbo",
+            promptImage: imageUrl,
+            promptText,
+        });
 
         console.log("Task ID:", task.id);
 
@@ -100,5 +97,6 @@ exports.videoConvert = async (req, res) => {
         });
     }
 };
+
 
 
