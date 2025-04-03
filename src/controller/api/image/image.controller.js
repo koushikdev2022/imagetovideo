@@ -7,12 +7,11 @@ exports.videoConvert = async (req, res) => {
     try {
         const apikey = process.env.API_KEY_IMAGE;
         const SERVER_URL = process.env.SERVER_URL;
-       
+
         if (!apikey) {
             return res.status(400).json({ msg: "API Key is missing", status: false });
         }
 
-        // Ensure file is uploaded
         if (!req.file) {
             return res.status(400).json({ msg: "No image uploaded", status: false });
         }
@@ -25,52 +24,33 @@ exports.videoConvert = async (req, res) => {
             return res.status(400).json({ msg: "Unsupported image format. Use JPG or PNG.", status: false });
         }
 
-        // 🔥 Ensure the URL is correct
         const imageUrl = `${SERVER_URL}/uploads/images/${req.file.filename}`;
         console.log("Generated Image URL:", imageUrl);
 
-        // ✅ Fetch the image and calculate content length manually
-        let contentLength = null;
+        // ✅ Check if the image URL is accessible
         try {
-            const response = await axios({
-                method: "GET",
-                url: imageUrl,
-                responseType: "stream",
-            });
-
-            contentLength = response.headers["content-length"] || null;
-
-            if (!contentLength) {
-                let size = 0;
-                response.data.on("data", (chunk) => {
-                    size += chunk.length;
-                });
-
-                await new Promise((resolve) => response.data.on("end", resolve));
-                contentLength = size;
+            const response = await axios.get(imageUrl);
+            if (response.status !== 200) {
+                return res.status(400).json({ msg: "Uploaded image is not accessible.", status: false });
             }
         } catch (err) {
             console.error("Image URL not accessible:", err.message);
-            return res.status(400).json({ msg: "Uploaded image is not accessible. Make sure it's public.", status: false });
+            return res.status(400).json({ msg: "Uploaded image is not accessible.", status: false });
         }
 
-        if (!contentLength) {
-            return res.status(400).json({ msg: "Unable to determine Content-Length.", status: false });
-        }
-
-        const promptText = req.body.promptText || "Create a dynamic animation from this still image: Separate & animate foreground/background with parallax Add subtle environment effects (swaying leaves, drifting clouds) Include gentle particle effects where fitting Slow camera zoom in to characters, then zoom out Keep original colors and mood Ensure all movement feels natural and smooth";
+        const promptText = req.body.promptText || "Create a dynamic animation from this still image.";
 
         const client = new RunwayML({ apiKey: apikey });
 
-        // 🔥 Send a proper image URL
+        // ✅ Call RunwayML API without Content-Length
         const task = await client.imageToVideo.create({
             model: "gen3a_turbo",
-            promptImage: imageUrl, // ✅ Should be a publicly accessible URL
+            promptImage: imageUrl,
             promptText,
             headers: {
-                "Content-Type": "image/jpeg",
-                "Content-Length": contentLength.toString(), // ✅ Fixed by computing `contentLength` manually
-            },
+                "X-Runway-Version": "2024-11-06", // ✅ Required version header
+                "Authorization": `Bearer ${apikey}`, // ✅ Include Authorization header
+            }
         });
 
         console.log("Task ID:", task.id);
@@ -105,7 +85,7 @@ exports.videoConvert = async (req, res) => {
         console.error("Error in videoConvert:", err);
         return res.status(500).json({
             msg: err?.message || "Internal Server Error",
-            status: false,
+            status: false
         });
     }
 };
