@@ -11,12 +11,7 @@ exports.videoConvert = async (req, res) => {
     try {
         const apikey = process.env.API_KEY_IMAGE;
         const SERVER_URL = process.env.SERVER_URL;
-        const response = await axios.head(imageUrl);
-
-        // Ensure Content-Length is present
-        if (!response.headers["content-length"]) {
-            throw new Error("Content-Length not found in response headers.");
-        }
+       
         if (!apikey) {
             return res.status(400).json({ msg: "API Key is missing", status: false });
         }
@@ -38,12 +33,17 @@ exports.videoConvert = async (req, res) => {
         const imageUrl = `${SERVER_URL}/uploads/images/${req.file.filename}`;
         console.log("Generated Image URL:", imageUrl);
 
-        // ✅ Verify if the image URL is accessible
+        // ✅ Fetch the image headers to get Content-Length
+        let response;
         try {
-            await axios.head(imageUrl);
+            response = await axios.head(imageUrl);
         } catch (err) {
             console.error("Image URL not accessible:", err.message);
             return res.status(400).json({ msg: "Uploaded image is not accessible. Make sure it's public.", status: false });
+        }
+
+        if (!response.headers["content-length"]) {
+            return res.status(400).json({ msg: "Content-Length header is missing.", status: false });
         }
 
         const promptText = req.body.promptText || "Create a dynamic animation from this still image: Separate & animate foreground/background with parallax Add subtle environment effects (swaying leaves, drifting clouds) Include gentle particle effects where fitting Slow camera zoom in to characters, then zoom out Keep original colors and mood Ensure all movement feels natural and smooth";
@@ -57,7 +57,7 @@ exports.videoConvert = async (req, res) => {
             promptText,
             headers: {
                 "Content-Type": "image/jpeg",
-                "Content-Length": response.headers["content-length"], // Ensure it's sent
+                "Content-Length": response.headers["content-length"], // ✅ Fixed by defining `response`
             }
         });
 
@@ -65,9 +65,9 @@ exports.videoConvert = async (req, res) => {
 
         let videoUrl = null;
         while (!videoUrl) {
-            const response = await client.tasks.get(task.id);
-            if (response.status === "completed") {
-                videoUrl = response.output.video;
+            const taskResponse = await client.tasks.get(task.id);
+            if (taskResponse.status === "completed") {
+                videoUrl = taskResponse.output.video;
                 break;
             }
             await new Promise((resolve) => setTimeout(resolve, 5000));
