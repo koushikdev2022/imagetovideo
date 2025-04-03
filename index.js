@@ -7,6 +7,7 @@ const path = require("path");
 
 // const sequelize = require("./src/config/db")
 app.use(express.static(path.join(__dirname, "./public/")));
+
 // sequelize
 //   .authenticate()
 //   .then(() => console.log('Database connected successfully'))

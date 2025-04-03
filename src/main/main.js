@@ -21,9 +21,9 @@ app.use(express.json({ limit: "400mb" }));
 
 app.use("/", load);
 
-app.use((req, res) => res.status(404).json({
-    status_code: 404,
-    message: "Content not found.!"
-}));
+// app.use((req, res) => res.status(404).json({
+//     status_code: 404,
+//     message: "Content not found.!"
+// }));
 
 module.exports = { app, port };
