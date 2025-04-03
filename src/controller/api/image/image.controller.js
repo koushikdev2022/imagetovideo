@@ -10,6 +10,7 @@ const path = require("path");
 exports.videoConvert = async (req, res) => {
     try {
         const apikey = process.env.API_KEY_IMAGE;
+        const SERVER_URL = process.env.SERVER_URL
         if (!apikey) {
             return res.status(400).json({ msg: "API Key is missing", status: false });
         }
