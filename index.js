@@ -1,7 +1,7 @@
 const { app,port } = require("./src/main/main")
 const express =require("express")
 
-require('dotenv').config();
+require("dotenv").config();
 
 const path = require("path");
 

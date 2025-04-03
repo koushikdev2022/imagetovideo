@@ -24,5 +24,7 @@ const imageController = require("../controller/api/image/image.controller")
 
 
 imageRouter.post("/data", upload.single("image"), imageController.videoConvert);
+imageRouter.post("/video", imageController.getTaskStatus);
+
 
 module.exports = imageRouter
