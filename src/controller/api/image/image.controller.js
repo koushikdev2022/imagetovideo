@@ -1,7 +1,7 @@
 import RunwayML from "@runwayml/sdk";
 
 const client = new RunwayML({
-  apiKey: process.env.RUNWAYML_API_SECRET, // Set your API key here
+  apiKey:"key_a15224207c1fcf89a1b639f3e745d02d3b987fb4d7f64f52cff91c1f0ad4e0e10d980454daace0ca22ebcc051d468eaea16e66b673cf1b7d33c56b6c366aed8b", // Set your API key here
 });
 
 export const videoConvert = async (req, res) => {
