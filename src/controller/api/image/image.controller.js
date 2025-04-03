@@ -3,8 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const RunwayML = require("@runwayml/sdk");
 
-const axios = require("axios");
-const RunwayML = require("@runwayml/sdk");
+
 
 exports.videoConvert = async (req, res) => {
     try {
