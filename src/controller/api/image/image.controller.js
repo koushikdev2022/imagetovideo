@@ -23,7 +23,7 @@ exports.videoConvert = async (req, res) => {
         const promptText = req.body.promptText || "Create a dynamic animation from this still image: Separate & animate foreground/background with parallax Add subtle environment effects (swaying leaves, drifting clouds) Include gentle particle effects where fitting Slow camera zoom in to characters, then zoom out Keep original colors and mood Ensure all movement feels natural and smooth";
 
         // Upload image to a public URL (assuming you have an upload service)
-        const imageUrl = `http://localhost:3015/uploads/images/${req.file.filename}`;
+        const imageUrl = `${SERVER_URL}/uploads/images/${req.file.filename}`;
 
         const client = new RunwayML({ apiKey: apikey });
 
@@ -65,7 +65,7 @@ exports.videoConvert = async (req, res) => {
         // Return the saved video URL
         return res.status(200).json({
             msg: "Video processing completed",
-            videoUrl: `http://localhost:3015/uploads/videos/${path.basename(videoPath)}`,
+            videoUrl: `${SERVER_URL}/uploads/videos/${path.basename(videoPath)}`,
             status: true,
         });
 
