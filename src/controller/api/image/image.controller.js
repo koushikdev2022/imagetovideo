@@ -11,7 +11,12 @@ exports.videoConvert = async (req, res) => {
     try {
         const apikey = process.env.API_KEY_IMAGE;
         const SERVER_URL = process.env.SERVER_URL;
+        const response = await axios.head(imageUrl);
 
+        // Ensure Content-Length is present
+        if (!response.headers["content-length"]) {
+            throw new Error("Content-Length not found in response headers.");
+        }
         if (!apikey) {
             return res.status(400).json({ msg: "API Key is missing", status: false });
         }
