@@ -33,6 +33,7 @@ exports.videoConvert = async (req, res) => {
         model: "gen3a_turbo",
         promptImage: `data:image/jpeg;base64,${Buffer.from(imageBuffer).toString("base64")}`, // Convert image to Base64
         promptText: promptImage,
+        duration: 5,
       }),
     });
 
